@@ -56,6 +56,7 @@ def get_contact_person_id_strict(entry, jwt_token):
       
     else:
         return None
+    
       
 def get_contact_person_id_loose(entry, jwt_token):
     """
@@ -150,6 +151,7 @@ def contact_search_strict(input_filename, jwt_token, last_auth_time, username, p
         json.dump(data, file, indent=4, ensure_ascii=False)
 
     return jwt_token, last_auth_time
+  
         
 def contact_search_loose(input_filename, jwt_token, last_auth_time, username, password):
     """
@@ -191,4 +193,3 @@ def contact_search_loose(input_filename, jwt_token, last_auth_time, username, pa
         json.dump(data, file, indent=4, ensure_ascii=False)
 
     return jwt_token, last_auth_time
-

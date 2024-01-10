@@ -64,7 +64,6 @@ def get_company_enrichment_data(entry, jwt_token):
     return response.json()
 
 
-
 def update_company_data(entry, new_data_item):
     """
     Updates the company data in the given entry with the new data item.
@@ -133,6 +132,7 @@ def company_enrich(input_filename, jwt_token, last_auth_time, username, password
 
     return jwt_token, last_auth_time
 
+
 def get_company_enrichment_data_loose(entry, jwt_token):
     """
     Retrieves company enrichment data without location data from the ZoomInfo API using the provided entry and JWT token.
@@ -187,7 +187,6 @@ def get_company_enrichment_data_loose(entry, jwt_token):
         return None
 
     return response.json()
-
 
 
 def update_company_data_loose(entry, new_data_item):

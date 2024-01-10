@@ -47,7 +47,6 @@ def get_new_contact_data(entry, jwt_token):
 
     return response.json()
     
-    
 
 def update_new_contact_data(entry, new_data_item):
     """
@@ -73,8 +72,7 @@ def update_new_contact_data(entry, new_data_item):
         entry['phone'] = person_data['phone']
 
     return entry
-
-        
+  
 
 def add_new_contact(input_filename, jwt_token, last_auth_time, username, password):
     """

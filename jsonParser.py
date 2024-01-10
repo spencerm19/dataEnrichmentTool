@@ -32,8 +32,6 @@ def updateNeedsContact(input_filename):
     return count
 
 
-import json
-
 def remove_spaces(input_filename):
     """
     Removes leading and trailing spaces from string values in a JSON file.
@@ -57,7 +55,6 @@ def remove_spaces(input_filename):
         json.dump(data, f, indent=4, ensure_ascii=False)
     
 
-
 def update_address(input_filename):
     """
     Update the address fields of each entry in the JSON file located at input_filename.
@@ -78,4 +75,3 @@ def update_address(input_filename):
 
     with open(input_filename, 'w', encoding='utf-8') as file:
         json.dump(data, file, indent=4, ensure_ascii=False)
-

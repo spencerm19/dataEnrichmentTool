@@ -52,7 +52,6 @@ def get_contact_enrichment_data(entry, jwt_token):
     return response.json()
 
     
-    
 def update_contact_data(entry, new_data_item):
     """
     Updates an existing contact entry with new data from the Zoominfo API.
@@ -81,7 +80,6 @@ def update_contact_data(entry, new_data_item):
         entry['phone'] = person_data['phone']
 
     return entry
-
 
 
 def contact_enrich(input_filename, jwt_token, last_auth_time, username, password):

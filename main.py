@@ -7,6 +7,7 @@ import companyEnrich
 import jsonParser
 import contactSearch
 import addNewContact
+
 # Data Enrichment main file. 
 
 # - Application Function: Serves as a data enrichment tool using the Zoominfo API.
@@ -78,7 +79,6 @@ def main():
     
     jsonParser.remove_spaces(input_json)
     
-     
     print("Requesting new security token...") 
     jwt_token = auth.authenticate(username, password)
     last_auth_time = time.time()
