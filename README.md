@@ -1,10 +1,10 @@
 # Data Enrichment Tool
 
 This tool enriches contact and firmographic information using the Zoominfo API. It's designed to streamline the process of updating your database with the latest, most accurate data from Zoominfo.
-**Getting Started**
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
-**Prerequisites**
+
+## Prerequisites
 
 Before you begin, ensure you have the following:
 ```
