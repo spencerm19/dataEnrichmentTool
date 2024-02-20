@@ -49,7 +49,7 @@ def csv_to_json(input_csv_filename):
         "needsContact": "",
         "newContactFound": "",
         "personId": "",
-        "contactMeetsCriteria": "",
+        "contactMatchCriteria": "",
         "enrichmentStatus": "Success",
         "errorMessage": ""
     }
@@ -96,10 +96,10 @@ def json_to_csv(input_json):
         "companyState": "Supplier State",
         "companyZipCode": "Supplier Zip Code",
         "companyCountry": "Supplier Country",
-        "firstName": "First Name",
-        "lastName": "Last Name",
-        "emailAddress": "Email Address",
-        "phone": "Phone",
+        "firstName": "Supplier First Name",
+        "lastName": "Supplier Last Name",
+        "emailAddress": "Supplier Email",
+        "phone": "Supplier Phone",
         "siteName": "Site Name",
         "siteID": "Site ID",
         "additionalContactInfo": "Additional Contact Info",
@@ -121,7 +121,7 @@ def json_to_csv(input_json):
         "needsContact": "Needs New Contact",
         "newContactFound": "New Contact Found",
         "personId": "Contact Person ID",
-        "contactMeetsCriteria": "New Contact Meets Matching Criteria",
+        "contactMatchCriteria": "Contact Match Criteria",
         "enrichmentStatus": "Enrichment Status",
         "errorMessage": "Error Message"
     }

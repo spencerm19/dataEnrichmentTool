@@ -96,12 +96,11 @@ def main():
     jsonParser.updateNeedsContact(input_json)
 
     print("Returning Contact IDs...")
-    jwt_token, last_auth_time = contactSearch.contact_search_strict(input_json, jwt_token, last_auth_time, username, password)
-    jwt_token, last_auth_time = contactSearch.contact_search_loose(input_json, jwt_token, last_auth_time, username, password)
+    jwt_token, last_auth_time = contactSearch.contact_search(input_json, jwt_token, last_auth_time, username, password)
     
     print("Updating Missing Contacts...")
     jwt_token, last_auth_time = addNewContact.add_new_contact(input_json, jwt_token, last_auth_time, username, password)
-    print("Contact updates complete.")
+    print("\nContact updates complete.")
     
     # Update the addresses in the JSON file
     print("Preparing new CSV file...")

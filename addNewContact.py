@@ -93,6 +93,7 @@ def add_new_contact(input_filename, jwt_token, last_auth_time, username, passwor
         old_data = json.load(file)
 
     merged_data = []
+    processed_records = 0
     
     for entry in old_data:
 
@@ -105,8 +106,9 @@ def add_new_contact(input_filename, jwt_token, last_auth_time, username, passwor
                 new_data = get_new_contact_data(entry, jwt_token)
                 if new_data and new_data.get('success'):
                     entry = update_new_contact_data(entry, new_data['data']['result'][0])
-
-                
+                    processed_records += 1
+                    print(f"\rContacts updated: {processed_records}", end="", flush=True)
+        
         except IndexError as e:
             print(f"Error processing record: {entry}. Error: {e}")
 
