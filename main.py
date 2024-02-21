@@ -88,9 +88,8 @@ def main():
     print("Contact enrichment complete.\nBeginning company enrichment...")
 
     jwt_token, last_auth_time = companyEnrich.company_enrich(input_json, jwt_token, last_auth_time, username, password)
-    jwt_token, last_auth_time = companyEnrich.company_enrich_loose(input_json, jwt_token, last_auth_time, username, password)
 
-    print("Company enrichment complete.")
+    print("\nCompany enrichment complete.")
 
     print("Scanning for missing Contacts...")
     jsonParser.updateNeedsContact(input_json)
