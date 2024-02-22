@@ -37,8 +37,7 @@ def get_company_enrichment_data(entry, jwt_token, strict):
             }],
             "outputFields": [
                 "zi_c_location_id", "zi_c_name", "zi_c_company_name",
-                "zi_c_phone", "zi_c_url", "zi_c_company_url", "zi_c_naics6",
-                "zi_c_industry_primary", "zi_c_sub_industry_primary", "zi_c_employees",
+                "zi_c_phone", "zi_c_url", "zi_c_company_url", "zi_c_naics6", "zi_c_employees",
                 "zi_c_street", "zi_c_city", "zi_c_state", "zi_c_zip", "zi_c_country", "zi_c_company_id"
             ]
         }
@@ -97,8 +96,7 @@ def update_company_data(entry, new_data_item):
 
         fields_to_update = [
             'zi_c_location_id', 'zi_c_company_name', 'zi_c_phone', 'zi_c_url',
-            'zi_c_naics6', 'zi_c_industry_primary', 'zi_c_sub_industry_primary',
-            'zi_c_employees', 'zi_c_street', 'zi_c_city', 'zi_c_state',
+            'zi_c_naics6', 'zi_c_employees', 'zi_c_street', 'zi_c_city', 'zi_c_state',
             'zi_c_zip', 'zi_c_country', 'zi_c_name', 'zi_c_company_id'
         ]
 
@@ -139,15 +137,15 @@ def company_enrich(input_filename, jwt_token, last_auth_time, username, password
             jwt_token = auth.authenticate(username, password)
             last_auth_time = time.time()
             
-        entry['match_criteria'] = 'None' #TODO remove later after testing 
+        entry['company_match_criteria'] = 'None' 
             
         new_data = get_company_enrichment_data(entry, jwt_token, strict=True)
         if new_data and new_data.get('success') and new_data['data'].get('result') and new_data['data']['result'][0].get('data'):
-            entry['match_criteria'] = 'Strict'
+            entry['company_match_criteria'] = 'Strict'
         else:
             new_data = get_company_enrichment_data(entry, jwt_token, strict=False)
             if new_data and new_data.get('success') and new_data['data'].get('result'):
-                entry['match_criteria'] = 'Non-strict'
+                entry['company_match_criteria'] = 'Non-strict'
 
         if new_data and new_data.get('success') and new_data['data'].get('result'):
             entry = update_company_data(entry, new_data)  

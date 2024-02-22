@@ -37,8 +37,8 @@ def csv_to_json(input_csv_filename):
         "zi_c_phone": "",
         "zi_c_url": "",
         "zi_c_naics6": "",
-        "zi_c_industry_primary": "",
-        "zi_c_sub_industry_primary": "",
+        "sectorTitle": "",
+        "primaryIndustry": "",
         "zi_c_employees": "",
         "zi_c_street": "",
         "zi_c_city": "",
@@ -109,8 +109,8 @@ def json_to_csv(input_json):
         "zi_c_phone": "Company Phone",
         "zi_c_url": "Website",
         "zi_c_naics6": "6-digit NAICS Code",
-        "zi_c_industry_primary": "Primary Industry",
-        "zi_c_sub_industry_primary": "Primary Sub-Industry",
+        "sectorTitle": "Sector Title",
+        "primaryIndustry": "Primary Industry",
         "zi_c_employees": "Number of Employees",
         "zi_c_street": "Company Street",
         "zi_c_city": "Company City",
@@ -122,6 +122,7 @@ def json_to_csv(input_json):
         "newContactFound": "New Contact Found",
         "personId": "Contact Person ID",
         "contactMatchCriteria": "Contact Match Criteria",
+        "company_match_criteria": "Company Match Criteria",
         "enrichmentStatus": "Enrichment Status",
         "errorMessage": "Error Message"
     }
@@ -152,3 +153,12 @@ def json_to_csv(input_json):
         for entry in data:
             row = {csv_mapping.get(k, k): v for k, v in entry.items()}
             csv_writer.writerow(row)
+
+def count_records(input_csv_filename):
+    
+    with open(input_csv_filename, 'r', encoding='utf-8-sig') as csv_file:
+        reader = csv.reader(csv_file)
+        next(reader, None)
+        record_count = sum(1 for row in reader if any(field.strip() for field in row))
+        
+    print(f'\nInitialization succeeded.\nThe CSV file has {record_count} rows.\n')
