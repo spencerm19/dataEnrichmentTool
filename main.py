@@ -7,6 +7,7 @@ import companyEnrich
 import jsonParser
 import contactSearch
 import addNewContact
+import naicsMatch
 
 # Data Enrichment main file. 
 
@@ -71,6 +72,8 @@ def main():
         print("No file selected. Exiting the program.")
         return
     
+    fileConvert.count_records(input_csv)
+    
     print(f"Converting {input_csv} to JSON")
     fileConvert.csv_to_json(input_csv)
 
@@ -85,7 +88,7 @@ def main():
 
     print("Beginning contact enrichment...")
     jwt_token, last_auth_time = contactEnrich.contact_enrich(input_json, jwt_token, last_auth_time, username, password)
-    print("Contact enrichment complete.\nBeginning company enrichment...")
+    print("\nContact enrichment complete.\nBeginning company enrichment...")
 
     jwt_token, last_auth_time = companyEnrich.company_enrich(input_json, jwt_token, last_auth_time, username, password)
 
@@ -103,6 +106,7 @@ def main():
     
     # Update the addresses in the JSON file
     print("Preparing new CSV file...")
+    naicsMatch.get_sector_and_industry(input_json)
     jsonParser.update_address(input_json)
     
     # Convert the JSON file back to CSV format

@@ -100,6 +100,7 @@ def contact_enrich(input_filename, jwt_token, last_auth_time, username, password
         old_data = json.load(file)
 
     merged_data = []
+    contacts_processed = 0
     
     for entry in old_data:
 
@@ -112,6 +113,9 @@ def contact_enrich(input_filename, jwt_token, last_auth_time, username, password
         if new_data.get('success') and new_data['data']['result'][0]['matchStatus'] in ["CONTACT_ONLY_MATCH", "FULL_MATCH"]:
             entry = update_contact_data(entry, new_data['data']['result'][0])
         merged_data.append(entry)
+        
+        contacts_processed += 1
+        print(f"\rContacts processed: {contacts_processed}", end="", flush=True)
 
     with open(input_filename, 'w', encoding='utf-8') as file:
         json.dump(merged_data, file, indent=4, ensure_ascii=False)
