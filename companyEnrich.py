@@ -15,45 +15,56 @@ def get_company_enrichment_data(entry, jwt_token, strict):
     Returns:
         dict: A dictionary containing the enriched company data, or None if an error occurred.
     """
-    
-    url = "https://api.zoominfo.com/enrich/company-master" 
+
+    url = "https://api.zoominfo.com/enrich/company-master"
     headers = {
-        'Content-Type': 'application/json',
-        'Authorization': f'Bearer {jwt_token}' 
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {jwt_token}",
     }
-    
+
     def create_payload(include_email):
-        
+
         payload = {
-            "matchCompanyInput": [{
-                "zi_c_name": entry["companyName"],
-                "phone": {
-                    "zi_c_phone": entry["phone"]
-                },
-                "address": {
-                    "zi_c_country": entry["companyCountry"]
-                },
-                "match_reasons": [{"zi_c_country": "E"}]
-            }],
+            "matchCompanyInput": [
+                {
+                    "zi_c_name": entry["companyName"],
+                    "phone": {"zi_c_phone": entry["phone"]},
+                    "address": {"zi_c_country": entry["companyCountry"]},
+                    "match_reasons": [{"zi_c_country": "E"}],
+                }
+            ],
             "outputFields": [
-                "zi_c_location_id", "zi_c_name", "zi_c_company_name",
-                "zi_c_phone", "zi_c_url", "zi_c_company_url", "zi_c_naics6", "zi_c_employees",
-                "zi_c_street", "zi_c_city", "zi_c_state", "zi_c_zip", "zi_c_country", "zi_c_company_id"
-            ]
+                "zi_c_location_id",
+                "zi_c_name",
+                "zi_c_company_name",
+                "zi_c_phone",
+                "zi_c_url",
+                "zi_c_company_url",
+                "zi_c_naics6",
+                "zi_c_employees",
+                "zi_c_street",
+                "zi_c_city",
+                "zi_c_state",
+                "zi_c_zip",
+                "zi_c_country",
+                "zi_c_company_id",
+            ],
         }
         if include_email and entry.get("emailAddress"):
             payload["matchCompanyInput"][0]["email"] = entry["emailAddress"]
-            
+
         if strict:
             updated_address = {
                 "zi_c_street": entry["companyStreet"],
                 "zi_c_city": entry["companyCity"],
                 "zi_c_state": entry["companyState"],
-                "zi_c_zip": entry["companyZipCode"]
+                "zi_c_zip": entry["companyZipCode"],
             }
             payload["matchCompanyInput"][0]["address"].update(updated_address)
-            payload["matchCompanyInput"][0]["match_reasons"] = [{"zi_c_country": "E", "zi_c_name": "F"}]
-            
+            payload["matchCompanyInput"][0]["match_reasons"] = [
+                {"zi_c_country": "E", "zi_c_name": "F"}
+            ]
+
         return payload
 
     try:
@@ -67,13 +78,13 @@ def get_company_enrichment_data(entry, jwt_token, strict):
             response = requests.post(url, headers=headers, json=payload)
             response.raise_for_status()
         else:
-            entry['enrichmentStatus'] = 'Failed'
-            entry['errorMessage'] = str(e)
+            entry["enrichmentStatus"] = "Failed"
+            entry["errorMessage"] = str(e)
             return None
 
     except requests.exceptions.RequestException as e:
-        entry['enrichmentStatus'] = 'Failed'
-        entry['errorMessage'] = str(e)
+        entry["enrichmentStatus"] = "Failed"
+        entry["errorMessage"] = str(e)
         return None
 
     return response.json()
@@ -90,18 +101,28 @@ def update_company_data(entry, new_data_item):
     Returns:
     dict: The updated company data.
     """
-    
-    if 'data' in new_data_item and new_data_item['data'].get('result'):
-        company_data = new_data_item['data']['result'][0]['data']
+
+    if "data" in new_data_item and new_data_item["data"].get("result"):
+        company_data = new_data_item["data"]["result"][0]["data"]
 
         fields_to_update = [
-            'zi_c_location_id', 'zi_c_company_name', 'zi_c_phone', 'zi_c_url',
-            'zi_c_naics6', 'zi_c_employees', 'zi_c_street', 'zi_c_city', 'zi_c_state',
-            'zi_c_zip', 'zi_c_country', 'zi_c_name', 'zi_c_company_id'
+            "zi_c_location_id",
+            "zi_c_company_name",
+            "zi_c_phone",
+            "zi_c_url",
+            "zi_c_naics6",
+            "zi_c_employees",
+            "zi_c_street",
+            "zi_c_city",
+            "zi_c_state",
+            "zi_c_zip",
+            "zi_c_country",
+            "zi_c_name",
+            "zi_c_company_id",
         ]
 
         for field in fields_to_update:
-            if entry[field] == '' and field in company_data:
+            if entry[field] == "" and field in company_data:
                 entry[field] = company_data[field]
 
     else:
@@ -124,38 +145,43 @@ def company_enrich(input_filename, jwt_token, last_auth_time, username, password
     Returns:
         tuple: A tuple containing the updated JWT token and the timestamp of the last authentication.
     """
-    
-    with open(input_filename, 'r', encoding='utf-8') as file:
+
+    with open(input_filename, "r", encoding="utf-8") as file:
         old_data = json.load(file)
 
     merged_data = []
     companies_processed = 0
-    
+
     for entry in old_data:
 
-        if time.time() - last_auth_time >= 55*60:
+        if time.time() - last_auth_time >= 55 * 60:
             jwt_token = auth.authenticate(username, password)
             last_auth_time = time.time()
-            
-        entry['company_match_criteria'] = 'None' 
-            
+
+        entry["company_match_criteria"] = "None"
+
         new_data = get_company_enrichment_data(entry, jwt_token, strict=True)
-        if new_data and new_data.get('success') and new_data['data'].get('result') and new_data['data']['result'][0].get('data'):
-            entry['company_match_criteria'] = 'Strict'
+        if (
+            new_data
+            and new_data.get("success")
+            and new_data["data"].get("result")
+            and new_data["data"]["result"][0].get("data")
+        ):
+            entry["company_match_criteria"] = "Strict"
         else:
             new_data = get_company_enrichment_data(entry, jwt_token, strict=False)
-            if new_data and new_data.get('success') and new_data['data'].get('result'):
-                entry['company_match_criteria'] = 'Non-strict'
+            if new_data and new_data.get("success") and new_data["data"].get("result"):
+                entry["company_match_criteria"] = "Non-strict"
 
-        if new_data and new_data.get('success') and new_data['data'].get('result'):
-            entry = update_company_data(entry, new_data)  
-        
+        if new_data and new_data.get("success") and new_data["data"].get("result"):
+            entry = update_company_data(entry, new_data)
+
         merged_data.append(entry)
-        
+
         companies_processed += 1
         print(f"\rCompanies processed: {companies_processed}", end="", flush=True)
 
-    with open(input_filename, 'w', encoding='utf-8') as file:
+    with open(input_filename, "w", encoding="utf-8") as file:
         json.dump(merged_data, file, indent=4, ensure_ascii=False)
 
     return jwt_token, last_auth_time
