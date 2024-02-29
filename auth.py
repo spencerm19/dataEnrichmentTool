@@ -1,5 +1,6 @@
 import requests
 import json
+import getpass
 
 
 def get_login_credentials():
@@ -11,9 +12,10 @@ def get_login_credentials():
 
     while True:
         username = input("Enter your Zoominfo username: ")
-        password = input("Enter your Zoominfo password: ")
+        password = getpass.getpass("Enter your Zoominfo password: ")
 
         if authenticate(username, password):
+            print("User authenticated.\n")
             return (username, password)
         else:
             print("Invalid login. Please try again.")
