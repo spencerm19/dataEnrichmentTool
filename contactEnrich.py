@@ -37,7 +37,7 @@ def get_contact_enrichment_data(entry, jwt_token):
 
     payload = {
         "matchPersonInput": [match_person_input],
-        "outputFields": ["firstName", "lastName", "email", "phone"],
+        "outputFields": ["firstName", "lastName", "email", "phone", "jobTitle"],
     }
 
     response = requests.post(url, headers=headers, json=payload)
@@ -78,6 +78,8 @@ def update_contact_data(entry, new_data_item):
         entry["emailAddress"] = person_data["email"]
     if not entry["phone"] and person_data["phone"]:
         entry["phone"] = person_data["phone"]
+    if not entry["jobTitle"] and person_data["jobTitle"]:
+        entry["jobTitle"] = person_data["jobTitle"]
 
     return entry
 

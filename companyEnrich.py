@@ -48,6 +48,7 @@ def get_company_enrichment_data(entry, jwt_token, strict):
                 "zi_c_zip",
                 "zi_c_country",
                 "zi_c_company_id",
+                "zi_c_linkedin_url",
             ],
         }
         if include_email and entry.get("emailAddress"):
@@ -119,6 +120,7 @@ def update_company_data(entry, new_data_item):
             "zi_c_country",
             "zi_c_name",
             "zi_c_company_id",
+            "zi_c_linkedin_url",
         ]
 
         for field in fields_to_update:
