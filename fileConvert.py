@@ -13,6 +13,7 @@ def csv_to_json(input_csv_filename):
     Returns:
     None
     """
+    
     header_mapping = {
         "Supplier Company": "companyName",
         "Supplier First Name": "firstName",
