@@ -1,0 +1,264 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: Data Enrichment Tool Lambda Function
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - prod
+    Description: Deployment environment
+  RetentionDays:
+    Type: Number
+    Default: 30
+    Description: Number of days to retain CloudWatch logs
+  AlertEmail:
+    Type: String
+    Description: Email address for error notifications
+    Default: ''
+  MaxConcurrency:
+    Type: Number
+    Default: 5
+    Description: Maximum number of concurrent Lambda executions
+    MinValue: 1
+    MaxValue: 50
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Architectures:
+      - x86_64
+    Timeout: 300
+    MemorySize: 512
+    Environment:
+      Variables:
+        POWERTOOLS_SERVICE_NAME: data-enrichment
+        POWERTOOLS_METRICS_NAMESPACE: DataEnrichment
+        LOG_LEVEL: INFO
+
+Resources:
+  DataEnrichmentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: lambda_function.handler
+      Description: Data Enrichment Tool Lambda Function
+      ReservedConcurrentExecutions: !Ref MaxConcurrency
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn: !GetAtt DataEnrichmentDLQ.Arn
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref DataEnrichmentBucket
+        - S3WritePolicy:
+            BucketName: !Ref DataEnrichmentBucket
+        - SecretsManagerReadPolicy:
+            SecretArn: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:zoominfo/credentials-*
+        - CloudWatchPutMetricPolicy: {}
+        - XRayWritePolicy: {}
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt DataEnrichmentDLQ.QueueName
+      Tracing: Active
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref DataEnrichmentBucket
+          RAW_PREFIX: SupplierOperations/dataEnrichment/raw/
+          ENHANCED_PREFIX: SupplierOperations/dataEnrichment/enhanced/
+          ENVIRONMENT: !Ref Environment
+          DLQ_URL: !Ref DataEnrichmentDLQ
+      Events:
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket: !Ref DataEnrichmentBucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: SupplierOperations/dataEnrichment/raw/
+      Tags:
+        Environment: !Ref Environment
+        Service: DataEnrichment
+
+  DataEnrichmentBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub ${AWS::StackName}-${Environment}-data-enrichment
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: ArchiveRule
+            Status: Enabled
+            ExpirationInDays: 90
+            Transitions:
+              - TransitionInDays: 30
+                StorageClass: STANDARD_IA
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders: ['*']
+            AllowedMethods: [GET, PUT, POST, DELETE, HEAD]
+            AllowedOrigins: ['*']
+            MaxAge: 3600
+
+  DataEnrichmentBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref DataEnrichmentBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: EnforceTLS
+            Effect: Deny
+            Principal: '*'
+            Action: s3:*
+            Resource:
+              - !Sub ${DataEnrichmentBucket.Arn}/*
+              - !GetAtt DataEnrichmentBucket.Arn
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+          - Sid: AllowLambdaAccess
+            Effect: Allow
+            Principal:
+              AWS: !GetAtt DataEnrichmentFunctionRole.Arn
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+              - s3:DeleteObject
+            Resource: !Sub ${DataEnrichmentBucket.Arn}/*
+
+  DataEnrichmentLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${DataEnrichmentFunction}
+      RetentionInDays: !Ref RetentionDays
+      Tags:
+        Environment: !Ref Environment
+        Service: DataEnrichment
+
+  DataEnrichmentErrorTopic:
+    Type: AWS::SNS::Topic
+    Condition: HasAlertEmail
+    Properties:
+      DisplayName: Data Enrichment Error Notifications
+      TopicName: !Sub ${AWS::StackName}-${Environment}-errors
+      KmsMasterKeyId: alias/aws/sns
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref AlertEmail
+
+  DataEnrichmentAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Alert when data enrichment errors occur
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref DataEnrichmentFunction
+      TreatMissingData: notBreaching
+      AlarmActions: 
+        - !If [HasAlertEmail, !Ref DataEnrichmentErrorTopic, !Ref AWS::NoValue]
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: DataEnrichment
+
+  DataEnrichmentDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub ${AWS::StackName}-${Environment}-dlq
+      MessageRetentionPeriod: 1209600  # 14 days
+      VisibilityTimeout: 300
+      KmsMasterKeyId: alias/aws/sqs
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Service
+          Value: DataEnrichment
+
+  DataEnrichmentDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub ${AWS::StackName}-${Environment}-dashboard
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "properties": {
+                "metrics": [
+                  ["AWS/Lambda", "Invocations", "FunctionName", "${DataEnrichmentFunction}"],
+                  [".", "Errors", ".", "."],
+                  [".", "Duration", ".", "."],
+                  [".", "ConcurrentExecutions", ".", "."]
+                ],
+                "period": 300,
+                "stat": "Sum",
+                "region": "${AWS::Region}",
+                "title": "Lambda Metrics"
+              }
+            },
+            {
+              "type": "metric",
+              "properties": {
+                "metrics": [
+                  ["AWS/SQS", "NumberOfMessagesReceived", "QueueName", "${DataEnrichmentDLQ.QueueName}"],
+                  [".", "ApproximateAgeOfOldestMessage", ".", "."]
+                ],
+                "period": 300,
+                "stat": "Sum",
+                "region": "${AWS::Region}",
+                "title": "DLQ Metrics"
+              }
+            }
+          ]
+        }
+
+Conditions:
+  HasAlertEmail: !Not [!Equals [!Ref AlertEmail, '']]
+
+Outputs:
+  DataEnrichmentFunction:
+    Description: Data Enrichment Lambda Function ARN
+    Value: !GetAtt DataEnrichmentFunction.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-function-arn
+  DataEnrichmentFunctionRole:
+    Description: IAM Role created for Data Enrichment Lambda function
+    Value: !GetAtt DataEnrichmentFunctionRole.Arn
+  DataEnrichmentBucketName:
+    Description: Name of the S3 bucket for data enrichment
+    Value: !Ref DataEnrichmentBucket
+    Export:
+      Name: !Sub ${AWS::StackName}-bucket-name
+  DataEnrichmentDLQUrl:
+    Description: URL of the Dead Letter Queue
+    Value: !Ref DataEnrichmentDLQ
+    Export:
+      Name: !Sub ${AWS::StackName}-dlq-url
+  DataEnrichmentDashboardUrl:
+    Description: URL of the CloudWatch Dashboard
+    Value: !Sub https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${AWS::StackName}-${Environment}-dashboard 

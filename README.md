@@ -1,55 +1,108 @@
-# Data Enrichment Tool
+# Data Enrichment Tool - AWS Lambda Version
 
-This tool enriches contact and firmographic information using the Zoominfo API. It's designed to streamline the process of updating your database with the latest, most accurate data from Zoominfo.
+This is the AWS Lambda version of the Data Enrichment Tool, which processes CSV files using the ZoomInfo API to enrich company and contact information.
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+## Architecture
+
+- **AWS Lambda Function**: Triggered by S3 file uploads
+- **Amazon S3**: Stores input and output files
+- **AWS Secrets Manager**: Stores ZoomInfo API credentials
+- **Amazon CloudWatch**: Monitors function execution and logs
+- **AWS X-Ray**: Provides distributed tracing
 
 ## Prerequisites
 
-Before you begin, ensure you have the following:
+1. AWS CLI installed and configured
+2. AWS SAM CLI installed
+3. Python 3.12 or later
+4. ZoomInfo API credentials stored in AWS Secrets Manager
+
+## Directory Structure
+
 ```
-Python Interpreter (3.6 or later)
-Active Zoominfo Credentials    
+.
+├── lambda_function.py     # Main Lambda handler
+├── lambda_auth.py        # Authentication module for Lambda
+├── requirements.txt      # Python dependencies
+├── template.yaml        # AWS SAM template
+└── README.md           # This file
 ```
-## Installation
 
-Follow these steps to get your development environment running:
+## Setup
 
-1. Clone the repository
-  ```
-  git clone https://github.com/AustinMBouchard/dataEnrichmentTool
-   ```
+1. Create a virtual environment and install dependencies:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-Install required dependencies
+2. Store ZoomInfo credentials in AWS Secrets Manager:
+```bash
+aws secretsmanager create-secret \
+    --name zoominfo/credentials \
+    --secret-string '{"username":"YOUR_USERNAME","password":"YOUR_PASSWORD"}'
+```
 
-Open your terminal and run the following commands:
+## Deployment
 
-    pip install requests
-    pip install PySimpleGUI
+1. Build the SAM application:
+```bash
+sam build
+```
 
-This will install the requests library for handling HTTP requests and PySimpleGUI for the application's graphical user interface.
+2. Deploy to AWS:
+```bash
+sam deploy --guided
+```
+
+During the guided deployment, you'll need to:
+- Choose a stack name
+- Select an AWS Region
+- Confirm the changes before deployment
 
 ## Usage
 
-To use the application, perform the following steps:
+1. Upload CSV files to:
+```
+s3://intit-systemsautomations/SupplierOperations/dataEnrichment/raw/
+```
 
-1. Navigate to the application directory in your terminal.
+2. The Lambda function will automatically process the file and save the enriched version to:
+```
+s3://intit-systemsautomations/SupplierOperations/dataEnrichment/enhanced/
+```
 
-2. Run the application using Python:
-  ```
-  python main.py
-  ```
-3. When prompted, enter your Zoominfo credentials.
+## Monitoring
 
-4. Select the file you would like to enrich. Ensure you are using the provided 'Data Enrichment Template' for compatibility.
+- View Lambda function logs in CloudWatch Logs
+- Monitor execution metrics in CloudWatch Metrics
+- Track function performance in X-Ray
+- Check CloudWatch Alarms for error notifications
 
-## File Format
+## Error Handling
 
-Make sure your file adheres to the 'Data Enrichment Template' format for successful processing. This format includes CSV UTF-8 encoding and contains the following headers:
+The function implements comprehensive error handling:
+- Input validation
+- API authentication errors
+- Processing failures
+- S3 operation errors
 
-[Supplier Company]	[Supplier Street]	[Supplier City]	[Supplier State]	[Supplier Zip Code]	[Supplier Country]	[Supplier First Name]	[Supplier Last Name]	[Supplier Email]	[Supplier Phone]	[Site Name]	[Site ID]	[Additional Contact Info]
+All errors are logged to CloudWatch Logs and will trigger CloudWatch Alarms if they exceed thresholds.
 
+## Security
 
-### Created by
+- Uses AWS Secrets Manager for credential storage
+- Implements least-privilege IAM roles
+- Enables AWS X-Ray for security auditing
+- Logs all operations to CloudWatch
 
-Austin Bouchard
+## Contributing
+
+1. Create a feature branch
+2. Make your changes
+3. Submit a pull request
+
+## License
+
+Proprietary - All rights reserved

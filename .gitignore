@@ -1,4 +1,3 @@
-
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -182,5 +181,33 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# AWS SAM
+.aws-sam/
+samconfig.toml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Local development
+.env.local
+*.log
+.DS_Store
+
+# Test coverage
+.coverage
+htmlcov/
+.pytest_cache/
+coverage.xml
+*.cover
 
 # End
